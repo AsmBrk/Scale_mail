@@ -1,0 +1,1034 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <title>Scale Mail</title>
+  <style>
+    canvas {
+      border: 2px solid #333;
+      display: none;
+      margin: 32px auto 20px 100px;
+      background-color: #f0f0f0;
+    }
+
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      z-index: 1000;
+    }
+
+    .modal {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background-color: white;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      text-align: center;
+      z-index: 1001;
+    }
+
+    .modal h2 {
+      color: #2c3e50;
+      margin-bottom: 20px;
+      font-size: 24px;
+    }
+
+    .modal button {
+      background-color: #3498db;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 16px;
+      transition: background-color 0.3s;
+    }
+
+    .modal button:hover {
+      background-color: #2980b9;
+    }
+
+    #baslangicEkrani {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: #f0f0f0;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 999;
+    }
+
+    #baslangicEkrani h1 {
+      color: #2c3e50;
+      font-size: 36px;
+      margin-bottom: 30px;
+      text-align: center;
+    }
+
+    #baslangicEkrani button {
+      background-color: #3498db;
+      color: white;
+      border: none;
+      padding: 15px 30px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 20px;
+      transition: background-color 0.3s;
+    }
+
+    #baslangicEkrani button:hover {
+      background-color: #2980b9;
+    }
+    /* Oyun ve paneli yan yana dizen  */
+    .oyun-ve-panel {
+      display: flex;
+      align-items: flex-start;
+      gap: 50px;
+      margin: 32px;
+      justify-content: center;
+    }
+
+    /*  Canvas'ın genişliği */
+    #oyunAlani {
+      flex: 0 0 auto;
+      border: 2px solid #333;
+      background-color: #f0f0f0;
+      margin-left: 50px;
+    }
+
+    /*  Müşteri paneli */
+    .musteri-panel {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 400px;
+      background: #fff;
+      padding: 16px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      border-radius: 8px;
+      margin-left: 20px;
+    }
+
+    .musteri-panel img {
+      width: 350px;
+      height: 350px;
+      object-fit: cover;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    /* Mesajlar paneli */
+    .mesajlar-panel {
+      width: 400px;
+      background: #fff;
+      padding: 20px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      border-radius: 8px;
+      margin-top: 20px;
+      margin-left: 50px;
+    }
+
+    .mesajlar-panel .mesaj {
+      background: #f8f9fa;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 10px;
+      font-size: 16px;
+      color: #333;
+      line-height: 1.5;
+      font-family: 'Arial', sans-serif;
+    }
+
+    .mesajlar-panel .mesaj:last-child {
+      margin-bottom: 0;
+    }
+
+    /* Sağ panel */
+    .sag-panel {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .musteri-mesajlari {
+      width: 100%;
+      max-height: 300px;
+      overflow-y: auto;
+      border-top: 1px solid #eee;
+      padding-top: 8px;
+      text-align: center;
+      font-size: 14px;
+      color: #333;
+    }
+
+    .musteri-mesajlari p {
+      margin: 8px 0;
+    }
+
+    /* Kontroller bölümü  */
+    .kontroller {
+      background: #f8f9fa;
+      padding: 15px 20px;
+      border-radius: 8px;
+      margin: 20px 0 20px 50px;
+      width: 800px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+
+    .kontroller h3 {
+      color: #2c3e50;
+      margin: 0 0 10px 0;
+      font-size: 18px;
+    }
+
+    .kontroller-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 15px;
+    }
+
+    .kontrol-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .tus {
+      background: #fff;
+      padding: 5px 10px;
+      border-radius: 4px;
+      border: 1px solid #dee2e6;
+      font-weight: bold;
+      color: #495057;
+      min-width: 30px;
+      text-align: center;
+    }
+    /* Modal butonlarını ortala */
+.modal-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 20px;
+}
+
+    .mouse-icon {
+      font-size: 20px;
+      color: #495057;
+    }
+
+  </style>
+</head>
+<body>
+  <div class="oyun-ve-panel">
+    <div>
+      <canvas id="oyunAlani" width="800" height="500"></canvas>
+      <div class="kontroller">
+        <h3>🎮 Oyun Kontrolleri</h3>
+        <div class="kontroller-grid">
+          <div class="kontrol-item">
+            <span class="tus">A</span>
+            <span>Parçayı sola döndür</span>
+          </div>
+          <div class="kontrol-item">
+            <span class="tus">D</span>
+            <span>Parçayı sağa döndür</span>
+          </div>
+          <div class="kontrol-item">
+            <span class="mouse-icon">🖱️</span>
+            <span>Parçayı sürükle ve bırak</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="sag-panel">
+  <div class="musteri-panel">
+    <img src="ekkoo.png" alt="Müşteri Fotoğrafı" />
+  </div>
+  <div class="mesajlar-panel">
+    <div class="mesaj">
+      Ben Ekko. Hanımımı ikna edip ulusumuzu kurtarmalıyım. O olmadan yapamam. Önce bu çantayı yerleştirmem lazım. Birinden bir şey öğrenmiştim. Çok özel birinden. Geçmişte nolursa olsun yeni bir şey inşaa etmek için geç değildir. Buna değecek biriyle... 
+    </div>
+  </div>
+   <div class="musteri-panel" style="display: none;">
+    <img src="maymun.png" alt="Müşteri Fotoğrafı" />
+  </div>
+  <div class="mesajlar-panel" style="display: none;">
+    <div class="mesaj">
+      Ben basit bir maymunum. Arkadaşlarımla beraber soyup yemek için muz topladım. Bu sepete yerleştirmem lazım. Yardımına ihtiyacım var.
+    </div>
+  </div>
+  <div class="musteri-panel" style="display: none;">
+    <img src="arthurmorgan.jpg" alt="Müşteri Fotoğrafı" />
+  </div>
+  <div class="mesajlar-panel" style="display: none;">
+    <div class="mesaj">
+      Dostlarımın bana ihtiyacı var. Onları Micah'tan kurtarmalıyım. O dost gibi görünen bir hain. Eşyaları ata yerleştir ve hızla yola koyulayım.
+    </div>
+  </div>
+</div>
+
+<div id="baslangicEkrani">
+  <h1>Envanter Yerleştirme Oyunu</h1>
+  <button onclick="oyunaBasla()">Oyuna Başla</button>
+</div>
+
+<canvas id="oyunAlani" width="800" height="500"></canvas>
+
+<div class="modal-overlay" id="tebrikModal">
+  <div class="modal">
+    <h2>🎉 Tebrikler! 🎉</h2>
+    <p id="seviyeMesaji">Seviye <span id="seviyeNo">1</span> Tamamlandı!</p>
+    <div class="modal-buttons">
+      <button id="sonrakiSeviyeBtn" onclick="sonrakiSeviyeyeGec()">Sonraki Seviye</button>
+      <button id="yenidenBaslaBtn" onclick="yenidenBasla()">Tekrar Oyna</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  
+const donusSesi = new Audio("donuss.mp4"); // Dönüş sesi
+donusSesi.volume = 0.1; 
+
+const arkaPlanMuzik = new Audio("fon.mp3"); // Arka plan müziği
+arkaPlanMuzik.loop = true;      // Müziğin sürekli çalmasını sağlar
+arkaPlanMuzik.volume = 1.0;     
+  
+
+const tuval = document.getElementById("oyunAlani");
+const cizim = tuval.getContext("2d");
+
+ // Oyun seviyeleri ve ızgara yapıları
+let mevcutSeviye = 1;
+const seviyeler = [
+  {
+    hucreBoyutu: 35,
+    satirSayisi: 6,
+    sutunSayisi: 10,
+    izgara: [
+      [1,1,1,1,1,1,1,1,1,1],
+      [1,1,1,1,1,1,1,1,1,1],
+      [1,1,1,1,1,1,1,1,1,1],
+      [1,1,1,1,1,1,1,1,1,1],
+      [0,1,1,1,1,1,1,1,1,0],
+      [0,0,1,1,1,1,1,1,0,0]
+    ],
+    canta: "Klasik Çanta"
+  },
+ 
+  {
+    hucreBoyutu: 34,
+    satirSayisi: 8,
+    sutunSayisi: 9,
+    izgara: [
+      [0,0,0,0,0,0,0,0,0],
+      [0,0,0,0,0,0,0,0,0],
+      [1,1,1,1,1,1,1,1,1],
+      [1,1,1,1,1,1,1,1,1],
+      [1,1,1,1,1,1,1,1,1],
+      [0,1,1,1,1,1,1,1,0],
+      [0,1,1,1,1,1,1,1,0],
+      [0,0,1,1,1,1,1,0,0]
+    ],
+    canta: "Muz sepeti"
+  },
+  {
+    hucreBoyutu: 32,
+    satirSayisi: 7,
+    sutunSayisi: 8,
+    izgara: [
+      [1,1,1,1,1,1,0,0],
+      [1,1,1,1,1,1,0,0],
+      [1,1,1,1,1,1,0,0],
+      [1,1,1,1,1,1,0,0],
+      [1,1,1,1,1,0,0,0],
+      [1,1,1,1,0,0,0,0]
+    ],
+    canta: "Eyer Çantası"
+  }
+];
+
+let hucreBoyutu = seviyeler[0].hucreBoyutu;
+let satirSayisi = seviyeler[0].satirSayisi;
+let sutunSayisi = seviyeler[0].sutunSayisi;
+
+
+let doluHücreler = Array.from({length: satirSayisi}, () => Array(sutunSayisi).fill(null));
+let parcaSayaci = 0;
+
+// Izgara için offset değerleri
+const IZGARA_OFFSET_X = 250;  
+const IZGARA_OFFSET_Y = 100;  
+
+// Arka plan resimleri
+const arkaplanResmi = new Image();
+arkaplanResmi.src = 'cantaseviye1.jpg';
+
+const seviye2Arkaplan = new Image();
+seviye2Arkaplan.src = 'sepetseviye3.jpg'; 
+
+const seviye3Arkaplan = new Image();
+seviye3Arkaplan.src = 'eyer.png'; 
+
+function parcalariOlustur(seviye) {
+  parcaSayaci = 0;
+  
+  if (seviye === 1) {
+    return [
+      {
+        id: ++parcaSayaci,
+        ad: "L-sekli",
+        renk: "#7fc",
+        bloklar: [[0,0], [1,0], [2,0], [2,1]],
+        konum: { x: sutunSayisi * hucreBoyutu + 40, y: 80 }, // YUKARI ALINDI
+        orijinalKonum: { x: sutunSayisi * hucreBoyutu + 40, y: 80 },
+        secili: false
+      },
+      {
+        id: ++parcaSayaci,
+        ad: "Kare",
+        renk: "#c0cfeb",
+        bloklar: [[0,0], [1,0], [0,1], [1,1]],
+        konum: { x: sutunSayisi * hucreBoyutu + 40, y: 250 }, // DEĞİŞMEDİ
+        orijinalKonum: { x: sutunSayisi * hucreBoyutu + 40, y: 250 },
+        secili: false
+      },
+      {
+        id: ++parcaSayaci,
+        ad: "Uzun",
+        renk: "#e9e3ce",
+        bloklar: [[0,0], [1,0], [2,0], [3,0], [4,0]],
+        konum: { x: sutunSayisi * hucreBoyutu + 40, y: 150 }, // YUKARI ALINDI
+        orijinalKonum: { x: sutunSayisi * hucreBoyutu + 40, y: 150 },
+        secili: false
+      }
+    ];
+  } else if (seviye === 2) {
+    return [
+       {
+      id: ++parcaSayaci,
+      ad: "U-sekli-1",
+      renk: "#ffe66d", // sarı
+      bloklar: [[0,0], [0,1], [1,1], [2,1], [2,0]],
+      konum: { x: sutunSayisi * hucreBoyutu + 40, y: 10 },
+      orijinalKonum: { x: sutunSayisi * hucreBoyutu + 40, y: 10 },
+      secili: false
+    },
+    {
+      id: ++parcaSayaci,
+      ad: "U-sekli-2",
+      renk: "#ffe66d",
+      bloklar: [[0,0], [0,1], [1,1], [2,1], [2,0]],
+      konum: { x: sutunSayisi * hucreBoyutu + 40, y: 70 },
+      orijinalKonum: { x: sutunSayisi * hucreBoyutu + 40, y: 70 },
+      secili: false
+    },
+    {
+      id: ++parcaSayaci,
+      ad: "U-sekli-3",
+      renk: "#ffe66d",
+      bloklar: [[0,0], [0,1], [1,1], [2,1], [2,0]],
+      konum: { x: sutunSayisi * hucreBoyutu + 40, y: 130 },
+      orijinalKonum: { x: sutunSayisi * hucreBoyutu + 40, y: 130 },
+      secili: false
+    },
+    {
+      id: ++parcaSayaci,
+      ad: "U-sekli-4",
+      renk: "#ffe66d",
+      bloklar: [[0,0], [0,1], [1,1], [2,1], [2,0]],
+      konum: { x: sutunSayisi * hucreBoyutu + 40, y: 190 },
+      orijinalKonum: { x: sutunSayisi * hucreBoyutu + 40, y: 190 },
+      secili: false
+    },
+    {
+      id: ++parcaSayaci,
+      ad: "U-sekli-5",
+      renk: "#ffe66d",
+      bloklar: [[0,0], [0,1], [1,1], [2,1], [2,0]],
+      konum: { x: sutunSayisi * hucreBoyutu + 40, y: 250 },
+      orijinalKonum: { x: sutunSayisi * hucreBoyutu + 40, y: 250 },
+      secili: false
+    },
+    {
+      id: ++parcaSayaci,
+      ad: "U-sekli-6",
+      renk: "#ffe66d",
+      bloklar: [[0,0], [0,1], [1,1], [2,1], [2,0]],
+      konum: { x: sutunSayisi * hucreBoyutu + 40, y: 310 },
+      orijinalKonum: { x: sutunSayisi * hucreBoyutu + 40, y: 310 },
+      secili: false
+    }
+    ];
+  } else if (seviye === 3) {
+    return [
+      {
+        id: ++parcaSayaci,
+        ad: "L-sekli",
+        renk: "#7fc",
+        bloklar: [[0,0], [1,0], [2,0], [2,1]],
+        konum: { x: sutunSayisi * hucreBoyutu + 40, y: 50 },
+        orijinalKonum: { x: sutunSayisi * hucreBoyutu + 40, y: 50 },
+        secili: false
+      },
+      {
+        id: ++parcaSayaci,
+        ad: "Kare",
+        renk: "#c0cfeb",
+        bloklar: [[0,0], [1,0], [0,1], [1,1]],
+        konum: { x: sutunSayisi * hucreBoyutu + 40, y: 150 },
+        orijinalKonum: { x: sutunSayisi * hucreBoyutu + 40, y: 150 },
+        secili: false
+      },
+      {
+        id: ++parcaSayaci,
+        ad: "T-sekli",
+        renk: "#ff9966",
+        bloklar: [[0,0], [1,0], [2,0], [1,1]],
+        konum: { x: sutunSayisi * hucreBoyutu + 40, y: 250 },
+        orijinalKonum: { x: sutunSayisi * hucreBoyutu + 40, y: 250 },
+        secili: false
+      },
+      {
+        id: ++parcaSayaci,
+        ad: "Z-sekli",
+        renk: "#cc99ff",
+        bloklar: [[0,0], [1,0], [1,1], [2,1]],
+        konum: { x: sutunSayisi * hucreBoyutu - 50, y: 100 },
+        orijinalKonum: { x: sutunSayisi * hucreBoyutu - 50, y: 100 },
+        secili: false
+      },
+      {
+        id: ++parcaSayaci,
+        ad: "Uzun",
+        renk: "#ff99cc",
+        bloklar: [[0,0], [1,0], [2,0], [3,0], [4,0]],
+        konum: { x: sutunSayisi * hucreBoyutu - 50, y: 200 },
+        orijinalKonum: { x: sutunSayisi * hucreBoyutu - 50, y: 200 },
+        secili: false
+      },
+      {
+        id: ++parcaSayaci,
+        ad: "U-sekli",
+        renk: "#99ffcc",
+        bloklar: [[0,0], [0,1], [1,1], [2,1], [2,0]],
+        konum: { x: sutunSayisi * hucreBoyutu - 50, y: 300 },
+        orijinalKonum: { x: sutunSayisi * hucreBoyutu - 50, y: 300 },
+        secili: false
+      }
+    ];
+  }
+}
+
+let parçalar = parcalariOlustur(1);
+
+function sonrakiSeviyeyeGec() {
+  mevcutSeviye++;
+  if (mevcutSeviye <= seviyeler.length) {
+    
+    hucreBoyutu = seviyeler[mevcutSeviye - 1].hucreBoyutu;
+    satirSayisi = seviyeler[mevcutSeviye - 1].satirSayisi;
+    sutunSayisi = seviyeler[mevcutSeviye - 1].sutunSayisi;
+    
+    // Müşteri panellerini değiştir
+    if (mevcutSeviye === 2) {
+      document.querySelectorAll('.musteri-panel')[0].style.display = 'none';
+      document.querySelectorAll('.mesajlar-panel')[0].style.display = 'none';
+      document.querySelectorAll('.musteri-panel')[1].style.display = 'flex';
+      document.querySelectorAll('.mesajlar-panel')[1].style.display = 'block';
+    }
+    if (mevcutSeviye === 3) {
+  document.querySelectorAll('.musteri-panel')[0].style.display = 'none';
+  document.querySelectorAll('.mesajlar-panel')[0].style.display = 'none';
+  document.querySelectorAll('.musteri-panel')[1].style.display = 'none';
+  document.querySelectorAll('.mesajlar-panel')[1].style.display = 'none';
+  document.querySelectorAll('.musteri-panel')[2].style.display = 'flex';
+  document.querySelectorAll('.mesajlar-panel')[2].style.display = 'block';
+}
+    
+    // Yeni grid için doluHücreler dizisini yeniden oluştur
+    doluHücreler = Array.from({length: satirSayisi}, () => Array(sutunSayisi).fill(null));
+    
+    // Parçaları yeni boyuta göre yeniden oluştur
+    parçalar = parcalariOlustur(mevcutSeviye);
+    
+    // Modalı kapat
+    document.getElementById('tebrikModal').style.display = 'none';
+    
+    // Oyunu güncelle
+    guncelle();
+  }
+}
+
+// ÇİZİM FONKSİYONLARI
+function cizGrid() {
+  cizim.clearRect(0, 0, tuval.width, tuval.height);
+  
+  // Aktif seviyenin ızgara şeklini al
+  const aktifIzgara = seviyeler[mevcutSeviye - 1].izgara;
+  
+const seviyeYOffset = mevcutSeviye === 1 ? 50 : 0;
+const seviyeXOffset = mevcutSeviye === 1 ? -200 : (mevcutSeviye === 2 ? -100 : (mevcutSeviye === 3 ? -180 : 0));
+  
+  // Seviye 1 için arka plan resmi çiz
+  if (mevcutSeviye === 1) {
+    const gridGenislik = sutunSayisi * hucreBoyutu;
+    const gridYukseklik = satirSayisi * hucreBoyutu;
+    const resimGenislik = gridGenislik * 2.0;
+    const resimYukseklik = gridYukseklik * 2.0;
+    const resimX = IZGARA_OFFSET_X + seviyeXOffset - (resimGenislik - gridGenislik) / 2;
+    const resimY = IZGARA_OFFSET_Y + seviyeYOffset - (resimYukseklik - gridYukseklik) / 2 - 20;
+    
+    cizim.globalAlpha = 0.2;
+    cizim.drawImage(arkaplanResmi, resimX, resimY, resimGenislik, resimYukseklik);
+    cizim.globalAlpha = 1.0;
+  } 
+  // Seviye 2 için arka plan resmi çiz
+else if (mevcutSeviye === 2) {
+  const gridGenislik = sutunSayisi * hucreBoyutu;
+  const gridYukseklik = satirSayisi * hucreBoyutu;
+
+  
+  const resimGenislik = gridGenislik * 1.2;
+  const resimYukseklik = gridYukseklik * 1.2;
+  const resimX = IZGARA_OFFSET_X - (resimGenislik - gridGenislik) / 2 - 90; 
+  const resimY = IZGARA_OFFSET_Y - (resimYukseklik - gridYukseklik) / 2;
+
+  cizim.globalAlpha = 0.2;
+  cizim.drawImage(seviye2Arkaplan, resimX, resimY, resimGenislik, resimYukseklik);
+  cizim.globalAlpha = 1.0;
+} 
+// Seviye 3 için arka plan resmi çiz
+else if (mevcutSeviye === 3) {
+  const gridGenislik = sutunSayisi * hucreBoyutu;
+  const gridYukseklik = satirSayisi * hucreBoyutu;
+
+  const resimGenislik = gridGenislik * 2.0; 
+  const resimYukseklik = gridYukseklik * 2.0;
+  const resimX = IZGARA_OFFSET_X - (resimGenislik - gridGenislik) / 2 - 177; 
+  const resimY = IZGARA_OFFSET_Y - (resimYukseklik - gridYukseklik) / 2;
+
+  cizim.globalAlpha = 0.15;
+  cizim.drawImage(seviye3Arkaplan, resimX, resimY, resimGenislik, resimYukseklik);
+  cizim.globalAlpha = 1.0;
+}
+  
+  // Izgara çizgilerini çiz
+  cizim.strokeStyle = mevcutSeviye === 1 ? "#999" : "#ccc";
+  cizim.lineWidth = 1;
+
+  if (mevcutSeviye === 2) {
+  cizim.strokeStyle = "#bbb"; 
+  cizim.lineWidth = 1.7;      
+} else if (mevcutSeviye === 1) {
+  cizim.strokeStyle = "#999";
+  cizim.lineWidth = 1;
+} else {
+  cizim.strokeStyle = "#ccc";
+  cizim.lineWidth = 1;
+}
+  
+  // Her bir kullanılabilir hücre için ayrı ayrı ızgara çiz
+  for (let y = 0; y < aktifIzgara.length; y++) {
+    for (let x = 0; x < aktifIzgara[y].length; x++) {
+      if (aktifIzgara[y][x] === 1) {
+        const hucreX = IZGARA_OFFSET_X + seviyeXOffset + x * hucreBoyutu;
+        const hucreY = IZGARA_OFFSET_Y + seviyeYOffset + y * hucreBoyutu;
+        
+        cizim.beginPath();
+        cizim.rect(hucreX, hucreY, hucreBoyutu, hucreBoyutu);
+        cizim.stroke();
+      }
+    }
+  }
+}
+
+function cizParca(parca) {
+  cizim.strokeStyle = "#333";
+  cizim.lineWidth = 1;
+  
+  
+  const seviyeYOffset = mevcutSeviye === 1 ? 50 : 0;
+ const seviyeXOffset = mevcutSeviye === 1 ? -200 : (mevcutSeviye === 2 ? -100 : (mevcutSeviye === 3 ? -180 : 0));
+  
+  for (let [dx, dy] of parca.bloklar) {
+    let px = IZGARA_OFFSET_X + seviyeXOffset + parca.konum.x + dx * hucreBoyutu;
+    let py = IZGARA_OFFSET_Y + seviyeYOffset + parca.konum.y + dy * hucreBoyutu;
+    
+    cizim.fillStyle = parca.renk;
+    cizim.fillRect(px, py, hucreBoyutu, hucreBoyutu);
+    cizim.strokeRect(px, py, hucreBoyutu, hucreBoyutu);
+  }
+}
+
+// Oyun ekranını güncelle
+function guncelle() {
+  cizGrid();
+  for (let parca of parçalar) {
+    cizParca(parca);
+  }
+}
+
+//FARE TAKİBİ
+let fare = { x: 0, y: 0, basili: false, ofsetX: 0, ofsetY: 0 };
+let seciliParca = null;
+
+ /* Mouse basıldığında seçili parçayı bul, sürükle */
+  
+tuval.addEventListener("mousedown", function(e) {
+  const dikdortgen = tuval.getBoundingClientRect();
+  fare.x = e.clientX - dikdortgen.left;
+  fare.y = e.clientY - dikdortgen.top;
+
+  const seviyeYOffset = mevcutSeviye === 1 ? 50 : 0;
+  const seviyeXOffset = mevcutSeviye === 1 ? -200 : (mevcutSeviye === 2 ? -100 : (mevcutSeviye === 3 ? -180 : 0));
+  const gridX = fare.x - (IZGARA_OFFSET_X + seviyeXOffset);
+  const gridY = fare.y - (IZGARA_OFFSET_Y + seviyeYOffset);
+
+  for (let parca of parçalar) {
+    for (let [dx, dy] of parca.bloklar) {
+      let px = parca.konum.x + dx * hucreBoyutu;
+      let py = parca.konum.y + dy * hucreBoyutu;
+      if (gridX >= px && gridX < px + hucreBoyutu &&
+          gridY >= py && gridY < py + hucreBoyutu) {
+        parca.secili = true;
+        fare.basili = true;
+        fare.ofsetX = gridX - parca.konum.x;
+        fare.ofsetY = gridY - parca.konum.y;
+        seciliParca = parca;
+        // Eski konumu kaydet
+        seciliParca.oncekiKonum = { x: parca.konum.x, y: parca.konum.y };
+        return;
+      }
+    }
+  }
+});
+
+// Mouse move'da çakışma kontrolü
+tuval.addEventListener("mousemove", function(e) {
+  if (seciliParca && fare.basili) {
+    const dikdortgen = tuval.getBoundingClientRect();
+    const seviyeYOffset = mevcutSeviye === 1 ? 50 : 0;
+    const seviyeXOffset = mevcutSeviye === 1 ? -200 : (mevcutSeviye === 2 ? -100 : (mevcutSeviye === 3 ? -180 : 0));
+    const gridX = e.clientX - dikdortgen.left - (IZGARA_OFFSET_X + seviyeXOffset);
+    const gridY = e.clientY - dikdortgen.top - (IZGARA_OFFSET_Y + seviyeYOffset);
+
+    let yeniX = gridX - fare.ofsetX;
+    let yeniY = gridY - fare.ofsetY;
+
+    seciliParca.konum.x = yeniX;
+    seciliParca.konum.y = yeniY;
+    guncelle();
+  }
+});
+
+// Mouse up'da çakışma kontrolü
+tuval.addEventListener("mouseup", function() {
+  if (seciliParca) {
+    // Izgaraya hizala
+    let yeniX = Math.round(seciliParca.konum.x / hucreBoyutu) * hucreBoyutu;
+    let yeniY = Math.round(seciliParca.konum.y / hucreBoyutu) * hucreBoyutu;
+
+    // Izgara sınırları ve kullanılabilir hücre kontrolü
+    let gridX = Math.round(yeniX / hucreBoyutu);
+    let gridY = Math.round(yeniY / hucreBoyutu);
+    let aktifIzgara = seviyeler[mevcutSeviye - 1].izgara;
+    let satirSayisi = aktifIzgara.length;
+    let sutunSayisi = aktifIzgara[0].length;
+
+    // Parçanın tüm blokları ızgara içinde ve kullanılabilir mi?
+    let tamamenIzgaraIcineBirakildi = true;
+    for (let [dx, dy] of seciliParca.bloklar) {
+      let x = gridX + dx;
+      let y = gridY + dy;
+      if (
+        x < 0 || x >= sutunSayisi ||
+        y < 0 || y >= satirSayisi ||
+        aktifIzgara[y][x] !== 1
+      ) {
+        tamamenIzgaraIcineBirakildi = false;
+        break;
+      }
+    }
+
+    let cakismaVar = false;
+    if (tamamenIzgaraIcineBirakildi) {
+      // Diğer parçalarla çakışma kontrolü
+      for (let diger of parçalar) {
+        if (diger !== seciliParca) {
+          for (let [dx1, dy1] of seciliParca.bloklar) {
+            let x1 = gridX + dx1;
+            let y1 = gridY + dy1;
+            for (let [dx2, dy2] of diger.bloklar) {
+              let x2 = Math.round(diger.konum.x / hucreBoyutu) + dx2;
+              let y2 = Math.round(diger.konum.y / hucreBoyutu) + dy2;
+              if (x1 === x2 && y1 === y2) {
+                cakismaVar = true;
+                break;
+              }
+            }
+            if (cakismaVar) break;
+          }
+        }
+        if (cakismaVar) break;
+      }
+    }
+
+    if (tamamenIzgaraIcineBirakildi && !cakismaVar) {
+      // Izgara içine ve geçerli yere bırakıldıysa hizala ve kaydet
+      seciliParca.konum.x = yeniX;
+      seciliParca.konum.y = yeniY;
+      seciliParca.oncekiKonum = { ...seciliParca.konum };
+    } else if (tamamenIzgaraIcineBirakildi && cakismaVar) {
+      // Izgara içinde ama çakışıyor, eski konuma dön
+      seciliParca.konum.x = seciliParca.oncekiKonum.x;
+      seciliParca.konum.y = seciliParca.oncekiKonum.y;
+    } else {
+      // Izgara dışında bırakıldı, olduğu yerde bırak 
+      seciliParca.oncekiKonum = { ...seciliParca.konum };
+    }
+
+    seciliParca.secili = false;
+    fare.basili = false;
+    seciliParca = null;
+    guncelle();
+
+    // Tüm parçaların yerleşip yerleşmediğini kontrol et
+    if (tumParcalarYerlesmisMi()) {
+      if (mevcutSeviye === 3) {
+        document.querySelector('#tebrikModal h2').textContent = '🎉 Tebrikler! Oyunu Tamamladınız! 🎉';
+        document.querySelector('#seviyeMesaji').textContent = 'Tüm seviyeleri başarıyla tamamladınız!';
+        document.querySelector('#sonrakiSeviyeBtn').style.display = 'none';
+        document.querySelector('#yenidenBaslaBtn').style.display = 'block';
+      } else {
+        document.querySelector('#tebrikModal h2').textContent = '🎉 Tebrikler! 🎉';
+        document.querySelector('#seviyeMesaji').innerHTML = 'Seviye <span id="seviyeNo">' + mevcutSeviye + '</span> Tamamlandı!';
+        document.querySelector('#sonrakiSeviyeBtn').style.display = 'block';
+        document.querySelector('#yenidenBaslaBtn').style.display = 'block';
+      }
+      document.getElementById('tebrikModal').style.display = 'block';
+    }
+  }
+});
+
+// Çakışma kontrolü 
+function parcaCakisiyorMu(parca, yeniX, yeniY, yeniBloklar) {
+  const bloklar = yeniBloklar || parca.bloklar;
+  const aktifIzgara = seviyeler[mevcutSeviye - 1].izgara;
+  
+  for (let [dx, dy] of bloklar) {
+    const x = Math.floor(yeniX / hucreBoyutu) + dx;
+    const y = Math.floor(yeniY / hucreBoyutu) + dy;
+    
+    // Izgara sınırlarını kontrol et
+    if (x < 0 || x >= sutunSayisi || y < 0 || y >= satirSayisi) {
+      return true;
+    }
+    
+    // Kullanılamayan hücreleri kontrol et
+    if (aktifIzgara[y][x] === 0) {
+      return true;
+    }
+    
+    // Diğer parçalarla çakışmayı kontrol et
+    if (doluHücreler[y][x] !== null && doluHücreler[y][x] !== parca.id) {
+      return true;
+    }
+  }
+  return false;
+}
+
+// Döndürme fonksiyonlarını ekle
+function dondurSola(bloklar) {
+  return bloklar.map(([x, y]) => [y, -x]);
+}
+
+function dondurSaga(bloklar) {
+  return bloklar.map(([x, y]) => [-y, x]);
+}
+
+// Klavye olaylarını dinle
+window.addEventListener("keydown", function(e) {
+  if (!seciliParca) return;
+
+  let yeniBloklar;
+  let eskiBloklar = [...seciliParca.bloklar];
+
+  if (e.key === "a" || e.key === "A") {
+    yeniBloklar = dondurSola(seciliParca.bloklar);
+    donusSesi.currentTime = 0; // Hızlıca tekrar çalabilmek için
+    donusSesi.play();
+  } else if (e.key === "d" || e.key === "D") {
+    yeniBloklar = dondurSaga(seciliParca.bloklar);
+    donusSesi.currentTime = 0;
+    donusSesi.play();
+  } else {
+    return;
+  }
+
+  // Döndürme sonrası çakışma ve sınır kontrolü
+  let gecerliDonme = true;
+  let donmusKonum = [];
+
+  // Döndürülmüş konumları hesapla
+  for (let [dx, dy] of yeniBloklar) {
+    let x = seciliParca.konum.x + dx * hucreBoyutu;
+    let y = seciliParca.konum.y + dy * hucreBoyutu;
+    
+    // Oyun alanı sınır kontrolü
+    if (x < 0 || x + hucreBoyutu > tuval.width || 
+        y < 0 || y + hucreBoyutu > tuval.height) {
+      gecerliDonme = false;
+      break;
+    }
+    donmusKonum.push({x, y});
+  }
+
+  // Geçici olarak yeni blokları uygula
+  seciliParca.bloklar = yeniBloklar;
+
+  if (gecerliDonme) {
+    // Diğer parçalarla çakışma kontrolü
+    for (let parca of parçalar) {
+      if (parca !== seciliParca) {
+        for (let [dx1, dy1] of seciliParca.bloklar) {
+          let x1 = seciliParca.konum.x + dx1 * hucreBoyutu;
+          let y1 = seciliParca.konum.y + dy1 * hucreBoyutu;
+          
+          for (let [dx2, dy2] of parca.bloklar) {
+            let x2 = parca.konum.x + dx2 * hucreBoyutu;
+            let y2 = parca.konum.y + dy2 * hucreBoyutu;
+            
+            if (Math.abs(x1 - x2) < hucreBoyutu && 
+                Math.abs(y1 - y2) < hucreBoyutu) {
+              gecerliDonme = false;
+              break;
+            }
+          }
+          if (!gecerliDonme) 
+          break;
+        }
+      }
+      if (!gecerliDonme) 
+      break;
+    }
+  }
+
+  if (!gecerliDonme) {
+    seciliParca.bloklar = eskiBloklar; // Çakışma veya sınır aşımı varsa eski konuma geri dön
+  }
+
+  guncelle();
+});
+
+
+const tumParcalarYerindeMi = parçalar.every(parca => {
+  let gridX = Math.round(parca.konum.x / hucreBoyutu);
+  let gridY = Math.round(parca.konum.y / hucreBoyutu);
+  return parca.bloklar.every(([dx, dy]) => {
+    let x = gridX + dx;
+    let y = gridY + dy;
+    return doluHücreler[y][x] === parca.id;
+  });
+});
+function tumParcalarYerlesmisMi() {
+  for (let parca of parçalar) {
+    // Grid koordinatlarını hesapla
+    let gridX = Math.floor(parca.konum.x / hucreBoyutu);
+    let gridY = Math.floor(parca.konum.y / hucreBoyutu);
+    
+    for (let [dx, dy] of parca.bloklar) {  // Parçanın tüm bloklarını kontrol et
+      let x = gridX + dx;
+      let y = gridY + dy;
+      
+      if (x < 0 || x >= sutunSayisi || y < 0 || y >= satirSayisi) {  // Grid dışında mı kontrol et
+        return false;
+      }
+      
+      // Diğer parçalarla çakışma kontrolü
+      for (let digerParca of parçalar) {
+        if (digerParca !== parca) {
+          for (let [dx2, dy2] of digerParca.bloklar) {
+            let x2 = Math.floor(digerParca.konum.x / hucreBoyutu) + dx2;
+            let y2 = Math.floor(digerParca.konum.y / hucreBoyutu) + dy2;
+            
+            if (x === x2 && y === y2) {
+              return false;
+            }
+          }
+        }
+      }
+    }
+  }
+  return true;
+}
+
+function oyunaBasla() {
+  // Başlangıç ekranını gizle
+  document.getElementById('baslangicEkrani').style.display = 'none';
+  // Canvas'ı göster
+  document.getElementById('oyunAlani').style.display = 'block';
+  // Sadece ilk seviye müşteri panelini göster
+  document.querySelectorAll('.musteri-panel')[0].style.display = 'flex';
+  document.querySelectorAll('.mesajlar-panel')[0].style.display = 'block';
+  document.querySelectorAll('.musteri-panel')[1].style.display = 'none';
+  document.querySelectorAll('.mesajlar-panel')[1].style.display = 'none';
+  // Arka plan müziğini başlat
+  arkaPlanMuzik.currentTime = 0;
+  arkaPlanMuzik.play();
+  // Oyunu başlat
+  guncelle();
+}
+
+function yenidenBasla() {
+  mevcutSeviye = 1;
+  hucreBoyutu = seviyeler[0].hucreBoyutu;
+  satirSayisi = seviyeler[0].satirSayisi;
+  sutunSayisi = seviyeler[0].sutunSayisi;
+
+  // Tüm müşteri ve mesaj panellerini gizle
+  document.querySelectorAll('.musteri-panel').forEach((el, i) => {
+    el.style.display = i === 0 ? 'flex' : 'none';
+  });
+  document.querySelectorAll('.mesajlar-panel').forEach((el, i) => {
+    el.style.display = i === 0 ? 'block' : 'none';
+  });
+
+  doluHücreler = Array.from({length: satirSayisi}, () => Array(sutunSayisi).fill(null));
+  parçalar = parcalariOlustur(1);
+
+  document.querySelector('#tebrikModal h2').textContent = '🎉 Tebrikler! 🎉';
+  document.querySelector('#seviyeMesaji').innerHTML = 'Seviye <span id="seviyeNo">1</span> Tamamlandı!';
+  document.querySelector('#sonrakiSeviyeBtn').style.display = 'block';
+  document.querySelector('#yenidenBaslaBtn').style.display = 'block';
+  document.getElementById('tebrikModal').style.display = 'none';
+
+  document.getElementById('baslangicEkrani').style.display = 'flex';
+  document.getElementById('oyunAlani').style.display = 'none';
+}
+// Resim yüklendiğinde oyunu güncelle
+arkaplanResmi.onload = function() {
+  guncelle();
+};
+
+seviye2Arkaplan.onload = function() {
+  guncelle();
+};
+
+seviye3Arkaplan.onload = function() {
+  guncelle();
+};
+</script>
+</body>
+</html>
